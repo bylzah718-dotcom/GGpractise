@@ -1,0 +1,50 @@
+{% extends "rental/base.html" %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<div class="booking-layout">
+  <form method="post" enctype="multipart/form-data" class="form" id="booking-form" data-quote-url="{% url 'rental:api_quote' %}"{% if booking %} data-booking="{{ booking.pk }}"{% endif %} novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="message message-error" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+
+    <div class="field">{{ form.hall.label_tag }}{{ form.hall }}{{ form.hall.errors }}</div>
+    <div class="row-3">
+      <div class="field">{{ form.date.label_tag }}{{ form.date }}{{ form.date.errors }}</div>
+      <div class="field">{{ form.start_hour.label_tag }}{{ form.start_hour }}{{ form.start_hour.errors }}</div>
+      <div class="field">{{ form.hours.label_tag }}{{ form.hours }}{{ form.hours.errors }}</div>
+    </div>
+    <div class="field">{{ form.people.label_tag }}{{ form.people }}{{ form.people.errors }}</div>
+
+    <fieldset class="field" id="seats-fieldset">
+      <legend>{{ form.makeup_seats.label }}</legend>
+      <div class="check-list">
+        {% for option in form.makeup_seats %}<label class="check" for="{{ option.id_for_label }}">{{ option.tag }} <span>{{ option.choice_label }}</span></label>{% endfor %}
+      </div>
+      {{ form.makeup_seats.errors }}
+    </fieldset>
+
+    <fieldset class="field" id="equipment-fieldset">
+      <legend>{{ form.equipment.label }}</legend>
+      <p class="muted">Занятые на выбранное время единицы блокируются автоматически.</p>
+      <div class="check-list check-list-scroll">
+        {% for option in form.equipment %}<label class="check" for="{{ option.id_for_label }}">{{ option.tag }} <span>{{ option.choice_label }}</span> <small class="busy-note"></small></label>{% endfor %}
+      </div>
+      {{ form.equipment.errors }}
+    </fieldset>
+
+    <div class="field">{{ form.reference_file.label_tag }}{{ form.reference_file }}<small class="muted">{{ form.reference_file.help_text }}</small>{{ form.reference_file.errors }}
+      {% if booking and booking.reference_file %}<small>Загружено: <a href="{{ booking.reference_file.url }}">файл</a></small>{% endif %}</div>
+    <div class="field">{{ form.comment.label_tag }}{{ form.comment }}{{ form.comment.errors }}</div>
+
+    <button type="submit" class="btn">{% if booking %}Сохранить{% else %}Оформить бронь{% endif %}</button>
+    <a href="{% if booking %}{{ booking.get_absolute_url }}{% else %}{% url 'rental:booking_list' %}{% endif %}">Отмена</a>
+  </form>
+
+  <aside class="quote-panel" aria-live="polite">
+    <h2>Стоимость</h2>
+    <div id="quote-body"><p class="muted">Выберите зал, дату, время и длительность.</p></div>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'rental/js/booking.js' %}"></script>{% endblock %}

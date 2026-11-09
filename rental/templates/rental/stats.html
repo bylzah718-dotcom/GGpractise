@@ -1,0 +1,42 @@
+{% extends "rental/base.html" %}
+{% load static %}
+{% block title %}Показатели{% endblock %}
+{% block content %}
+<h1>Сводные показатели студии</h1>
+<div class="kpi-grid">
+  <div class="kpi"><span class="kpi-value">{{ s.bookings_total }}</span><span class="kpi-label">броней всего</span></div>
+  <div class="kpi"><span class="kpi-value">{{ s.revenue|floatformat:"0" }} ₽</span><span class="kpi-label">выручка (без отменённых)</span></div>
+  <div class="kpi"><span class="kpi-value">{{ s.average_price|floatformat:"0" }} ₽</span><span class="kpi-label">средний чек</span></div>
+  <div class="kpi"><span class="kpi-value">{{ s.hours_total }}</span><span class="kpi-label">часов аренды залов</span></div>
+  <div class="kpi"><span class="kpi-value">{{ s.cancelled_share|floatformat:"-1" }}%</span><span class="kpi-label">доля отмен</span></div>
+  <div class="kpi"><span class="kpi-value">{{ s.penalties_total|floatformat:"0" }} ₽</span><span class="kpi-label">штрафов выписано ({{ s.penalties_count }})</span></div>
+  <div class="kpi"><span class="kpi-value">{{ s.repair_share|floatformat:"-1" }}%</span><span class="kpi-label">оборудования в ремонте</span></div>
+</div>
+
+<div class="two-col">
+  <section>
+    <h2>Выручка по залам, ₽</h2>
+    <div id="chart-halls" class="chart" data-url="{% url 'rental:api_stats' %}" data-key="by_hall" role="img" aria-label="Столбчатая диаграмма выручки по залам">Загрузка…</div>
+  </section>
+  <section>
+    <h2>Выручка по месяцам, ₽</h2>
+    <div id="chart-months" class="chart" data-url="{% url 'rental:api_stats' %}" data-key="by_month" role="img" aria-label="График выручки по месяцам">Загрузка…</div>
+  </section>
+</div>
+
+<div class="two-col">
+  <section>
+    <h2>Брони по залам</h2>
+    <div class="table-wrap"><table><thead><tr><th>Зал</th><th>Броней</th><th>Выручка, ₽</th></tr></thead><tbody>
+      {% for r in s.by_hall %}<tr><td>{{ r.hall__name }}</td><td>{{ r.count }}</td><td>{{ r.revenue|floatformat:"-2" }}</td></tr>{% empty %}<tr><td colspan="3">Нет данных</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <section>
+    <h2>Популярное оборудование</h2>
+    <div class="table-wrap"><table><thead><tr><th>Название</th><th>Раз в бронях</th></tr></thead><tbody>
+      {% for r in s.top_equipment %}<tr><td>{{ r.equipment__name }}</td><td>{{ r.count }}</td></tr>{% empty %}<tr><td colspan="2">Нет данных</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'rental/js/stats.js' %}"></script>{% endblock %}

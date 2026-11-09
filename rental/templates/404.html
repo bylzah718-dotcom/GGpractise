@@ -1,0 +1,7 @@
+{% extends "rental/base.html" %}
+{% block title %}Не найдено{% endblock %}
+{% block content %}
+<h1>404 — страница не найдена</h1>
+<p>Такой страницы нет или запись была удалена.</p>
+<p><a class="btn" href="{% url 'rental:home' %}">На главную</a></p>
+{% endblock %}

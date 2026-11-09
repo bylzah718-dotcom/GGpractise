@@ -1,0 +1,65 @@
+{% extends "rental/base.html" %}
+{% load static %}
+{% block title %}{{ hall.name }}{% endblock %}
+{% block content %}
+<div class="detail-head">
+  {% if hall.image %}<img class="detail-img" src="{{ hall.image.url }}" alt="Зал «{{ hall.name }}»" width="800" height="500">{% endif %}
+  <div>
+    <h1>{{ hall.name }}</h1>
+    <p class="muted">{{ hall.area }} м² · до {{ hall.capacity }} чел.{% if avg_rating %} · ★ {{ avg_rating|floatformat:1 }} ({{ reviews|length }}){% endif %}</p>
+    <p>{{ hall.description }}</p>
+    {% if hall.is_active %}<a class="btn" href="{% url 'rental:booking_create' %}?hall={{ hall.slug }}">Забронировать этот зал</a>{% else %}<p class="message message-warning">Зал временно не принимает брони.</p>{% endif %}
+  </div>
+</div>
+
+<section>
+  <h2>Тарифы</h2>
+  <div class="table-wrap">
+    <table>
+      <caption class="sr-only">Цена часа аренды зала по времени суток</caption>
+      <thead><tr><th>Время суток</th><th>Часы</th><th>Будни, ₽/ч</th><th>Выходные, ₽/ч</th></tr></thead>
+      <tbody>
+        {% for row in tariff_rows %}
+          <tr><td>{{ row.label }}</td><td>{{ row.interval }}</td><td>{{ row.weekday|default_if_none:"—"|floatformat:"-2" }}</td><td>{{ row.weekend|default_if_none:"—"|floatformat:"-2" }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">Скидка {{ DISCOUNT_PERCENT }}% на аренду зала при бронировании от {{ DISCOUNT_FROM_HOURS }} часов.</p>
+</section>
+
+<section>
+  <h2>Свободное время</h2>
+  <form class="inline-fields" id="schedule-form" data-url="{% url 'rental:api_schedule' %}" data-hall="{{ hall.pk }}" data-slug="{{ hall.slug }}" action="{% url 'rental:booking_create' %}" method="get">
+    <label>Дата <input type="date" id="schedule-date" value="{{ today|date:'Y-m-d' }}" min="{{ today|date:'Y-m-d' }}"></label>
+    <span id="schedule-daytype" class="muted"></span>
+  </form>
+  <div id="schedule-grid" class="slot-grid" aria-live="polite">Загрузка…</div>
+  <p class="muted"><span class="legend free"></span> свободно <span class="legend busy"></span> занято <span class="legend past"></span> прошло</p>
+</section>
+
+<div class="two-col">
+  <section>
+    <h2>Интерьерные зоны</h2>
+    <ul class="plain">{% for z in zones %}<li><strong>{{ z.name }}</strong>{% if z.description %} — {{ z.description }}{% endif %}</li>{% empty %}<li>Не описаны.</li>{% endfor %}</ul>
+  </section>
+  <section>
+    <h2>Гримёрные места</h2>
+    <ul class="plain">{% for s in seats %}<li>{{ s.name }} — {{ s.price_per_hour|floatformat:"-2" }} ₽/ч</li>{% empty %}<li>Нет.</li>{% endfor %}</ul>
+  </section>
+</div>
+
+<section>
+  <h2>Отзывы</h2>
+  {% if can_review %}<p><a class="btn btn-small" href="{% url 'rental:review_create' hall.slug %}">Оставить отзыв</a></p>{% endif %}
+  {% for r in reviews %}
+    <article class="review">
+      <header><strong>{{ r.author.username }}</strong> <span class="stars" aria-label="Оценка {{ r.rating }} из 5">{{ "★★★★★"|slice:r.rating }}</span> <small class="muted">{{ r.created_at|date:"d.m.Y" }}</small></header>
+      <p>{{ r.text }}</p>
+      {% if r.author_id == user.pk %}<a href="{% url 'rental:review_edit' r.pk %}">Изменить</a> · {% endif %}
+      {% if r.author_id == user.pk or is_studio_admin %}<a href="{% url 'rental:review_delete' r.pk %}">Удалить</a>{% endif %}
+    </article>
+  {% empty %}<p class="muted">Отзывов пока нет. Оставить отзыв можно после состоявшейся брони.</p>{% endfor %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'rental/js/schedule.js' %}"></script>{% endblock %}

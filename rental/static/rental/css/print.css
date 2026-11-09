@@ -1,0 +1,13 @@
+body { font: 14px/1.45 "Times New Roman", serif; color: #000; margin: 0; background: #fff; }
+.sheet { max-width: 800px; margin: 0 auto; padding: 24px 16px; }
+h1 { font-size: 22px; margin: 0; }
+h2 { font-size: 16px; margin: 20px 0 6px; }
+header { border-bottom: 2px solid #000; margin-bottom: 14px; padding-bottom: 8px; }
+header p { margin: 4px 0 0; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #000; padding: 5px 8px; text-align: left; vertical-align: top; }
+.info th { width: 28%; background: #f1f1f1; }
+.calc tfoot th { text-align: right; }
+.sign { margin-top: 40px; }
+@media (max-width: 600px) { table { font-size: 12px; } th, td { padding: 3px 4px; } }
+@media print { .no-print { display: none; } .sheet { padding: 0; } }

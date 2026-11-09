@@ -1,0 +1,19 @@
+{% extends "rental/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<form method="post" enctype="multipart/form-data" class="form" novalidate>
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for field in form %}
+    <div class="field">
+      {{ field.label_tag }}{{ field }}
+      {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+      {{ field.errors }}
+    </div>
+  {% endfor %}
+  {% if item and item.image %}<p>Текущее фото:<br><img src="{{ item.image.url }}" alt="{{ item.name }}" width="200"></p>{% endif %}
+  <p class="muted">Фото: JPG, PNG или WEBP, до 2 МБ.</p>
+  <button type="submit" class="btn">Сохранить</button> <a href="{% url 'rental:equipment_list' %}">Отмена</a>
+</form>
+{% endblock %}

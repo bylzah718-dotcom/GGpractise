@@ -1,0 +1,11 @@
+{% extends "rental/base.html" %}
+{% block title %}Подтверждение удаления{% endblock %}
+{% block content %}
+<h1>Удалить?</h1>
+<p>Вы действительно хотите удалить: <strong>{{ object_title }}</strong>?</p>
+<form method="post" class="form">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">Да, удалить</button>
+  <a href="{% if '/' in cancel_url %}{{ cancel_url }}{% else %}{% url cancel_url %}{% endif %}">Отмена</a>
+</form>
+{% endblock %}

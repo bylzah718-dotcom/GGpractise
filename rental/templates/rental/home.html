@@ -1,0 +1,26 @@
+{% extends "rental/base.html" %}
+{% block title %}Залы{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Аренда залов и оборудования для съёмок</h1>
+  <p>Выберите зал, время суток и дополнительный свет — стоимость рассчитает сервер. При брони от {{ DISCOUNT_FROM_HOURS }} часов скидка {{ DISCOUNT_PERCENT }}% на аренду зала.</p>
+  <a class="btn" href="{% url 'rental:booking_create' %}">Забронировать</a>
+</section>
+
+<h2>Наши залы</h2>
+<div class="card-grid">
+  {% for hall in halls %}
+    <article class="card">
+      {% if hall.image %}<img src="{{ hall.image.url }}" alt="Зал «{{ hall.name }}»" width="800" height="500" loading="lazy">{% else %}<div class="img-placeholder">Нет фото</div>{% endif %}
+      <div class="card-body">
+        <h3><a href="{{ hall.get_absolute_url }}">{{ hall.name }}</a></h3>
+        <p class="muted">{{ hall.area }} м² · до {{ hall.capacity }} чел.{% if hall.avg_rating %} · ★ {{ hall.avg_rating|floatformat:1 }}{% endif %}</p>
+        <p>{{ hall.description|truncatechars:90 }}</p>
+        <p class="price">от {{ hall.min_price|floatformat:"-2" }} ₽/час</p>
+      </div>
+    </article>
+  {% empty %}
+    <p>Залов пока нет. Загрузите демо-данные командой <code>python manage.py seed_demo</code>.</p>
+  {% endfor %}
+</div>
+{% endblock %}

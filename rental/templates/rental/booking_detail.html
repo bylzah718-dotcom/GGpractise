@@ -1,0 +1,71 @@
+{% extends "rental/base.html" %}
+{% block title %}Бронь №{{ booking.pk }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Бронь №{{ booking.pk }} <span class="badge badge-{{ booking.status }}">{{ booking.get_status_display }}</span></h1>
+  <a class="btn btn-small btn-light" href="{% url 'rental:booking_print' booking.pk %}" target="_blank" rel="noopener">Печатная форма</a>
+</div>
+
+<div class="two-col">
+  <section>
+    <h2>Детали</h2>
+    <dl class="defs">
+      <dt>Зал</dt><dd><a href="{{ booking.hall.get_absolute_url }}">{{ booking.hall.name }}</a></dd>
+      <dt>Арендатор</dt><dd>{{ booking.user.username }}</dd>
+      <dt>Время</dt><dd>{{ booking.start|date:"d.m.Y H:i" }}–{{ booking.end|date:"H:i" }} ({{ booking.hours }} ч)</dd>
+      <dt>Человек</dt><dd>{{ booking.people }}</dd>
+      <dt>Гримёрные</dt><dd>{% for s in seats %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</dd>
+      {% if booking.comment %}<dt>Комментарий</dt><dd>{{ booking.comment }}</dd>{% endif %}
+      {% if booking.reference_file %}<dt>Референс</dt><dd><a href="{{ booking.reference_file.url }}" target="_blank" rel="noopener">открыть файл</a>
+        {% with name=booking.reference_file.name|lower %}{% if name|slice:"-4:" != ".pdf" %}<br><img src="{{ booking.reference_file.url }}" alt="Референс к брони" width="240">{% endif %}{% endwith %}</dd>{% endif %}
+    </dl>
+  </section>
+  <section>
+    <h2>Стоимость</h2>
+    <dl class="defs">
+      <dt>Аренда зала</dt><dd>{{ booking.hall_cost|floatformat:"-2" }} ₽</dd>
+      {% if booking.discount_percent %}<dt>Скидка {{ booking.discount_percent }}%</dt><dd>−{{ booking.discount_amount|floatformat:"-2" }} ₽</dd>{% endif %}
+      <dt>Оборудование</dt><dd>{{ booking.equipment_cost|floatformat:"-2" }} ₽</dd>
+      <dt>Гримёрные</dt><dd>{{ booking.seats_cost|floatformat:"-2" }} ₽</dd>
+      <dt><strong>Итого</strong></dt><dd><strong>{{ booking.total_price|floatformat:"-2" }} ₽</strong></dd>
+    </dl>
+  </section>
+</div>
+
+{% if items %}
+<section>
+  <h2>Оборудование в брони</h2>
+  <div class="table-wrap"><table><thead><tr><th>Название</th><th>Инв. №</th><th>Цена часа</th><th>Стоимость</th></tr></thead><tbody>
+    {% for i in items %}<tr><td>{{ i.equipment.name }}</td><td>{{ i.equipment.inventory_number }}</td><td>{{ i.price_per_hour|floatformat:"-2" }} ₽</td><td>{{ i.cost|floatformat:"-2" }} ₽</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endif %}
+
+<section>
+  <h2>Штрафы за порчу</h2>
+  {% for p in penalties %}
+    <article class="review">
+      <strong>{{ p.amount|floatformat:"-2" }} ₽</strong> — {{ p.reason }}{% if p.equipment %} ({{ p.equipment.name }}){% endif %}
+      <span class="badge {% if p.is_paid %}badge-confirmed{% else %}badge-cancelled{% endif %}">{% if p.is_paid %}оплачен{% else %}не оплачен{% endif %}</span>
+      {% if p.photo %}<br><img src="{{ p.photo.url }}" alt="Фото повреждения" width="200">{% endif %}
+      {% if can_manage_equipment and not p.is_paid %}
+        <form method="post" action="{% url 'rental:penalty_paid' p.pk %}" class="inline-form">{% csrf_token %}<button class="link-button" type="submit">Отметить оплаченным</button></form>
+      {% endif %}
+    </article>
+  {% empty %}<p class="muted">Штрафов нет.</p>{% endfor %}
+  {% if can_penalize %}<a class="btn btn-small" href="{% url 'rental:penalty_create' booking.pk %}">Выписать штраф</a>{% endif %}
+</section>
+
+<div class="actions">
+  {% if is_studio_admin %}
+    {% if booking.status == "pending" %}<form method="post" action="{% url 'rental:booking_status' booking.pk %}" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="confirm"><button class="btn btn-small" type="submit">Подтвердить</button></form>{% endif %}
+    {% if booking.status == "confirmed" %}<form method="post" action="{% url 'rental:booking_status' booking.pk %}" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="complete"><button class="btn btn-small" type="submit">Отметить завершённой</button></form>{% endif %}
+  {% endif %}
+  {% if is_owner and booking.can_edit %}<a class="btn btn-small btn-light" href="{% url 'rental:booking_edit' booking.pk %}">Изменить</a>{% endif %}
+  {% if booking.can_cancel and is_owner or booking.can_cancel and is_studio_admin %}
+    <form method="post" action="{% url 'rental:booking_cancel' booking.pk %}" class="inline-form">{% csrf_token %}<button class="btn btn-small btn-danger" type="submit">Отменить бронь</button></form>
+  {% endif %}
+  {% if booking.can_delete and is_owner or booking.can_delete and is_studio_admin %}<a class="btn btn-small btn-danger" href="{% url 'rental:booking_delete' booking.pk %}">Удалить</a>{% endif %}
+  <a href="{% url 'rental:booking_list' %}">К списку</a>
+</div>
+{% endblock %}

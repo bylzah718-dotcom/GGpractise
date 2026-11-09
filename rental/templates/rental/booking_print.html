@@ -1,0 +1,43 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Квитанция по брони №{{ booking.pk }}</title>
+  <link rel="stylesheet" href="{% static 'rental/css/print.css' %}">
+</head>
+<body>
+  <div class="sheet">
+    <header>
+      <h1>Фотостудия «{{ STUDIO_NAME }}»</h1>
+      <p>Квитанция-договор на аренду зала № {{ booking.pk }} от {{ booking.created_at|date:"d.m.Y" }}</p>
+    </header>
+    <table class="info">
+      <tr><th>Арендатор</th><td>{{ booking.user.username }}{% if booking.user.email %} ({{ booking.user.email }}){% endif %}</td></tr>
+      <tr><th>Зал</th><td>{{ booking.hall.name }}, {{ booking.hall.area }} м²</td></tr>
+      <tr><th>Дата и время</th><td>{{ booking.start|date:"d.m.Y" }}, {{ booking.start|date:"H:i" }}–{{ booking.end|date:"H:i" }} ({{ booking.hours }} ч)</td></tr>
+      <tr><th>Статус</th><td>{{ booking.get_status_display }}</td></tr>
+    </table>
+
+    <h2>Расчёт</h2>
+    <table class="calc">
+      <thead><tr><th>Позиция</th><th>Кол-во</th><th>Цена, ₽</th><th>Сумма, ₽</th></tr></thead>
+      <tbody>
+        {% for seg in quote.segments %}<tr><td>Аренда зала: {{ seg.label|lower }} тариф, {{ seg.day_label|lower }}</td><td>{{ seg.hours }} ч</td><td>{{ seg.price|floatformat:"-2" }}</td><td>{{ seg.amount|floatformat:"-2" }}</td></tr>{% endfor %}
+        {% if booking.discount_percent %}<tr><td>Скидка {{ booking.discount_percent }}% (бронь от {{ DISCOUNT_FROM_HOURS }} ч)</td><td></td><td></td><td>−{{ booking.discount_amount|floatformat:"-2" }}</td></tr>{% endif %}
+        {% for i in items %}<tr><td>{{ i.equipment.name }} [{{ i.equipment.inventory_number }}]</td><td>{{ booking.hours }} ч</td><td>{{ i.price_per_hour|floatformat:"-2" }}</td><td>{{ i.cost|floatformat:"-2" }}</td></tr>{% endfor %}
+        {% for s in seats %}<tr><td>{{ s.name }}</td><td>{{ booking.hours }} ч</td><td>{{ s.price_per_hour|floatformat:"-2" }}</td><td>{{ s.price_per_hour|floatformat:"-2" }}×{{ booking.hours }}</td></tr>{% endfor %}
+      </tbody>
+      <tfoot><tr><th colspan="3">Итого к оплате</th><th>{{ booking.total_price|floatformat:"-2" }} ₽</th></tr></tfoot>
+    </table>
+
+    {% if penalties %}
+      <h2>Штрафы за порчу</h2>
+      <ul>{% for p in penalties %}<li>{{ p.amount|floatformat:"-2" }} ₽ — {{ p.reason }} ({% if p.is_paid %}оплачен{% else %}не оплачен{% endif %})</li>{% endfor %}</ul>
+    {% endif %}
+
+    <p class="sign">Арендатор: ____________________ &nbsp;&nbsp; Администратор: ____________________</p>
+    <p class="no-print"><button type="button" onclick="window.print()">Печать</button> <a href="{% url 'rental:booking_detail' booking.pk %}">Назад</a></p>
+  </div>
+</body>
+</html>

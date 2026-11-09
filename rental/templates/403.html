@@ -1,0 +1,7 @@
+{% extends "rental/base.html" %}
+{% block title %}Доступ запрещён{% endblock %}
+{% block content %}
+<h1>403 — доступ запрещён</h1>
+<p>У вас нет прав для просмотра этой страницы. Возможно, запись принадлежит другому пользователю.</p>
+<p><a class="btn" href="{% url 'rental:home' %}">На главную</a></p>
+{% endblock %}
