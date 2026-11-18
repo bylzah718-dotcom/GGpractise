@@ -9,7 +9,9 @@
   --accent-dark: #8f3f1d;
   --accent-soft: #f6e6dc;
   --ok: #2f7a4b;
-  --warn: #a8741a;
+  --warn: #8a5d0a;  /* было #a8741a: контраст 3,58 на #faf0d9, стало 5,08 (занятие 6) */
+  --secondary: #3b2a20;
+  --field: #857f75;
   --danger: #b3261e;
   --radius: 10px;
   --shadow: 0 1px 3px rgba(31, 29, 26, .08), 0 4px 14px rgba(31, 29, 26, .05);
@@ -66,7 +68,7 @@ code { background: var(--accent-soft); padding: .1em .35em; border-radius: 4px; 
 .message ul { margin: 0; padding-left: 1.1rem; }
 
 /* Герой и карточки */
-.hero { background: linear-gradient(135deg, #3b2a20, #7a3c1f); color: #fff; padding: 1.6rem 1.2rem; border-radius: var(--radius); margin-bottom: 1rem; }
+.hero { background: var(--secondary); color: #fff; padding: 1.6rem 1.2rem; border-radius: var(--radius); margin-bottom: 1rem; }
 .hero h1 { margin-top: 0; }
 .hero p { max-width: 46ch; margin-top: 0; }
 .card-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
@@ -109,7 +111,7 @@ code { background: var(--accent-soft); padding: .1em .35em; border-radius: 4px; 
 .field { margin-bottom: .9rem; }
 .field label, legend { display: block; font-weight: 600; margin-bottom: .25rem; }
 input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], input[type="search"], input[type="file"], select, textarea {
-  width: 100%; padding: .55rem .7rem; border: 1px solid #cfc8bd; border-radius: 8px; font: inherit; background: #fff; color: var(--text);
+  width: 100%; padding: .55rem .7rem; border: 1px solid var(--field); border-radius: 8px; font: inherit; background: #fff; min-height: 44px; color: var(--text);
 }
 textarea { resize: vertical; }
 fieldset { border: 1px solid var(--line); border-radius: 8px; padding: .7rem .9rem; margin: 0 0 .9rem; background: var(--surface); }
@@ -158,7 +160,16 @@ tr:last-child td { border-bottom: 0; }
 .chart { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: .5rem; min-height: 180px; }
 .chart svg { width: 100%; height: auto; display: block; }
 
-.site-footer { border-top: 1px solid var(--line); background: var(--surface); padding: 1rem 0; color: var(--muted); font-size: .88rem; }
+.site-footer { background: var(--secondary); padding: 1.5rem 0; color: #fff; font-size: .88rem; }
+.site-footer a { color: var(--accent-soft); }
+.footer-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; }
+.skip-link { position: absolute; left: -999px; top: 0; background: #fff; padding: .5rem 1rem; z-index: 20; }
+.skip-link:focus { left: 0; }
+.main-nav a[aria-current="page"] { color: var(--accent); border-bottom: 2px solid var(--accent); }
+.hero .btn-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+.hero .btn-light { background: #fff; }
+.steps { display: grid; gap: 1rem; grid-template-columns: 1fr; counter-reset: step; }
+.steps .card-body h3::before { counter-increment: step; content: counter(step) ". "; }
 
 /* ≥ 768 px */
 @media (min-width: 768px) {
@@ -169,7 +180,10 @@ tr:last-child td { border-bottom: 0; }
   .filters { grid-template-columns: repeat(2, 1fr); }
   .row-3 { grid-template-columns: repeat(3, 1fr); }
   .kpi-grid { grid-template-columns: repeat(3, 1fr); }
-  .hero { padding: 2.2rem 2rem; }
+  .container { padding-inline: 24px; }
+  .hero { padding: 3rem; }
+  .hero h1 { font-size: 2.25rem; }
+  .steps { grid-template-columns: repeat(3, 1fr); }
 }
 
 /* ≥ 1024 px: меню в одну строку */
@@ -185,8 +199,14 @@ tr:last-child td { border-bottom: 0; }
 
 /* ≥ 1440 px */
 @media (min-width: 1440px) {
-  .container { max-width: 1360px; }
+  .container { max-width: 1280px; padding-inline: 80px; }
   body { font-size: 17px; }
-  .card-grid { grid-template-columns: repeat(4, 1fr); }
+  .card-grid { grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
   .filters { grid-template-columns: repeat(7, 1fr); }
 }
+
+/* Исправления по макету занятия 7 */
+.main-nav a.btn { padding: .4rem .85rem; color: #fff; }
+.main-nav a.btn:hover { color: #fff; }
+.main-nav a.btn[aria-current="page"] { border-bottom: 0; color: #fff; }
+.footer-row address { font-style: normal; }

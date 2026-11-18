@@ -8,6 +8,6 @@
   {{ form.non_field_errors }}
   {% for field in form %}<div class="field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}
   <p class="muted">Фото: JPG, PNG или WEBP, до 2 МБ. Арендатор получит уведомление на почту.</p>
-  <button type="submit" class="btn">Выписать штраф</button> <a href="{{ booking.get_absolute_url }}">Отмена</a>
+  <button type="submit" class="btn">Выписать штраф</button> <a href="{% url 'rental:booking_detail' booking.pk %}">Отмена</a>
 </form>
 {% endblock %}

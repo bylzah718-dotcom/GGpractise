@@ -38,7 +38,7 @@
     <div class="field">{{ form.comment.label_tag }}{{ form.comment }}{{ form.comment.errors }}</div>
 
     <button type="submit" class="btn">{% if booking %}Сохранить{% else %}Оформить бронь{% endif %}</button>
-    <a href="{% if booking %}{{ booking.get_absolute_url }}{% else %}{% url 'rental:booking_list' %}{% endif %}">Отмена</a>
+    <a href="{% if booking %}{% url 'rental:booking_detail' booking.pk %}{% else %}{% url 'rental:booking_list' %}{% endif %}">Отмена</a>
   </form>
 
   <aside class="quote-panel" aria-live="polite">

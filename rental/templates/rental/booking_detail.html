@@ -10,7 +10,7 @@
   <section>
     <h2>Детали</h2>
     <dl class="defs">
-      <dt>Зал</dt><dd><a href="{{ booking.hall.get_absolute_url }}">{{ booking.hall.name }}</a></dd>
+      <dt>Зал</dt><dd><a href="{% url 'rental:hall_detail' booking.hall.slug %}">{{ booking.hall.name }}</a></dd>
       <dt>Арендатор</dt><dd>{{ booking.user.username }}</dd>
       <dt>Время</dt><dd>{{ booking.start|date:"d.m.Y H:i" }}–{{ booking.end|date:"H:i" }} ({{ booking.hours }} ч)</dd>
       <dt>Человек</dt><dd>{{ booking.people }}</dd>

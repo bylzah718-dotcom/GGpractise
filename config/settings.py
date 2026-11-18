@@ -71,7 +71,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -119,6 +119,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "static"]   # общие файлы проекта; статика приложения лежит в rental/static/
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -140,6 +141,9 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "Фотостудия 
 
 # --- Правила студии (бизнес-логика, читается сервером) ---
 STUDIO_NAME = "Кадр"
+# Контакты в подвале (в учебном проекте — заглушки, меняются переменными окружения)
+STUDIO_PHONE = os.environ.get("STUDIO_PHONE", "+7 900 000-00-00")
+STUDIO_EMAIL = os.environ.get("STUDIO_EMAIL", "studio@example.ru")
 STUDIO_OPEN_HOUR = 8          # студия открыта с 08:00
 STUDIO_CLOSE_HOUR = 23        # ... до 23:00
 MAX_BOOKING_HOURS = 10        # максимум часов в одной брони

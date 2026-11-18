@@ -8,30 +8,25 @@
   {% block extra_head %}{% endblock %}
 </head>
 <body>
+  <a class="skip-link" href="#content">К основному содержанию</a>
   <header class="site-header">
     <div class="container header-row">
       <a class="logo" href="{% url 'rental:home' %}">Кадр<span>фотостудия</span></a>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Меню</button>
       <nav id="main-nav" class="main-nav" aria-label="Основное меню">
-        <a href="{% url 'rental:home' %}">Залы</a>
-        <a href="{% url 'rental:equipment_list' %}">Оборудование</a>
+        {% for item in nav_items %}
+          <a href="{% url item.name %}"{% if item.button %} class="btn btn-small"{% endif %}{% if item.current %} aria-current="page"{% endif %}>{{ item.label }}</a>
+        {% endfor %}
         {% if user.is_authenticated %}
-          <a href="{% url 'rental:booking_list' %}">{% if is_studio_admin %}Все брони{% else %}Мои брони{% endif %}</a>
-          <a href="{% url 'rental:booking_create' %}" class="btn btn-small">Забронировать</a>
-          {% if can_manage_equipment %}<a href="{% url 'rental:stats' %}">Показатели</a>{% endif %}
-          {% if is_studio_admin %}<a href="{% url 'admin:index' %}">Админка</a>{% endif %}
           <span class="nav-user">{{ user.username }} <small>{{ role_label }}</small></span>
           <a href="{% url 'rental:password_change' %}">Пароль</a>
           <form method="post" action="{% url 'rental:logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button">Выйти</button></form>
-        {% else %}
-          <a href="{% url 'rental:login' %}">Войти</a>
-          <a href="{% url 'rental:register' %}" class="btn btn-small">Регистрация</a>
         {% endif %}
       </nav>
     </div>
   </header>
 
-  <main class="container">
+  <main id="content" class="container">
     {% if messages %}
       <ul class="messages" role="status">
         {% for message in messages %}<li class="message message-{{ message.tags }}">{{ message }}</li>{% endfor %}
@@ -41,7 +36,10 @@
   </main>
 
   <footer class="site-footer">
-    <div class="container">Фотостудия «{{ STUDIO_NAME }}» · работаем ежедневно с 08:00 до 23:00 · скидка {{ DISCOUNT_PERCENT }}% при брони от {{ DISCOUNT_FROM_HOURS }} часов</div>
+    <div class="container footer-row">
+      <p>© Фотостудия «{{ STUDIO_NAME }}». Ежедневно с 08:00 до 23:00 · скидка {{ DISCOUNT_PERCENT }}% при брони от {{ DISCOUNT_FROM_HOURS }} часов</p>
+      <address>Тел. {{ STUDIO_PHONE }} · <a href="mailto:{{ STUDIO_EMAIL }}">{{ STUDIO_EMAIL }}</a></address>
+    </div>
   </footer>
   <script src="{% static 'rental/js/base.js' %}"></script>
   {% block scripts %}{% endblock %}

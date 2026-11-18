@@ -1,26 +1,41 @@
 {% extends "rental/base.html" %}
 {% block title %}Залы{% endblock %}
 {% block content %}
-<section class="hero">
-  <h1>Аренда залов и оборудования для съёмок</h1>
-  <p>Выберите зал, время суток и дополнительный свет — стоимость рассчитает сервер. При брони от {{ DISCOUNT_FROM_HOURS }} часов скидка {{ DISCOUNT_PERCENT }}% на аренду зала.</p>
-  <a class="btn" href="{% url 'rental:booking_create' %}">Забронировать</a>
+<section class="hero" aria-labelledby="hero-title">
+  <h1 id="hero-title">Аренда фотостудии «{{ STUDIO_NAME }}»</h1>
+  <p>Шесть залов, свет и реквизит. Выберите зал, время и оборудование — стоимость посчитается сразу. При брони от {{ DISCOUNT_FROM_HOURS }} часов скидка {{ DISCOUNT_PERCENT }}% на аренду зала.</p>
+  <div class="btn-row">
+    <a class="btn" href="{% url 'rental:booking_create' %}">Забронировать зал</a>
+    <a class="btn btn-light" href="{% url 'rental:equipment_list' %}">Каталог оборудования</a>
+  </div>
 </section>
 
-<h2>Наши залы</h2>
-<div class="card-grid">
-  {% for hall in halls %}
-    <article class="card">
-      {% if hall.image %}<img src="{{ hall.image.url }}" alt="Зал «{{ hall.name }}»" width="800" height="500" loading="lazy">{% else %}<div class="img-placeholder">Нет фото</div>{% endif %}
-      <div class="card-body">
-        <h3><a href="{{ hall.get_absolute_url }}">{{ hall.name }}</a></h3>
-        <p class="muted">{{ hall.area }} м² · до {{ hall.capacity }} чел.{% if hall.avg_rating %} · ★ {{ hall.avg_rating|floatformat:1 }}{% endif %}</p>
-        <p>{{ hall.description|truncatechars:90 }}</p>
-        <p class="price">от {{ hall.min_price|floatformat:"-2" }} ₽/час</p>
-      </div>
-    </article>
-  {% empty %}
-    <p>Залов пока нет. Загрузите демо-данные командой <code>python manage.py seed_demo</code>.</p>
-  {% endfor %}
-</div>
+<section aria-labelledby="halls-title">
+  <h2 id="halls-title">Наши залы</h2>
+  <div class="card-grid">
+    {% for hall in halls %}
+      <article class="card">
+        {% if hall.image %}<img src="{{ hall.image.url }}" alt="Зал «{{ hall.name }}»: общий вид" width="800" height="500" loading="lazy">{% else %}<div class="img-placeholder" role="img" aria-label="Фото зала «{{ hall.name }}» пока не загружено">Нет фото</div>{% endif %}
+        <div class="card-body">
+          <h3>{{ hall.name }}</h3>
+          <p class="muted">{{ hall.area }} м² · до {{ hall.capacity }} чел.{% if hall.avg_rating %} · ★ {{ hall.avg_rating|floatformat:1 }}{% endif %}</p>
+          <p>{{ hall.description|truncatechars:90 }}</p>
+          <p>от <span class="price">{{ hall.min_price|floatformat:"-2" }} ₽/час</span></p>
+          <a class="btn btn-light btn-small" href="{% url 'rental:hall_detail' hall.slug %}">Подробнее<span class="sr-only"> о зале «{{ hall.name }}»</span></a>
+        </div>
+      </article>
+    {% empty %}
+      <p>Залов пока нет. Загрузите демо-данные командой <code>python manage.py seed_demo</code>.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section aria-labelledby="how-title">
+  <h2 id="how-title">Как это работает</h2>
+  <div class="steps">
+    <article class="card"><div class="card-body"><h3>Выберите зал</h3><p>Смотрите тарифы и свободное время.</p></div></article>
+    <article class="card"><div class="card-body"><h3>Добавьте оборудование</h3><p>Свет, фоны, реквизит, гримёрные места.</p></div></article>
+    <article class="card"><div class="card-body"><h3>Отправьте заявку</h3><p>Администратор подтвердит бронь.</p></div></article>
+  </div>
+</section>
 {% endblock %}

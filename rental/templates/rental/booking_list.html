@@ -39,7 +39,7 @@
     <tbody>
       {% for b in page %}
         <tr>
-          <td><a href="{{ b.get_absolute_url }}">{{ b.pk }}</a></td><td>{{ b.hall.name }}</td>
+          <td><a href="{% url 'rental:booking_detail' b.pk %}">{{ b.pk }}</a></td><td>{{ b.hall.name }}</td>
           {% if is_studio_admin %}<td>{{ b.user.username }}</td>{% endif %}
           <td>{{ b.start|date:"d.m.Y H:i" }}–{{ b.end|date:"H:i" }}</td><td>{{ b.hours }}</td>
           <td>{{ b.total_price|floatformat:"-2" }}</td><td><span class="badge badge-{{ b.status }}">{{ b.get_status_display }}</span></td>
