@@ -1,0 +1,23 @@
+{% extends "rental/base.html" %}
+{% block title %}Контакты{% endblock %}
+{% block content %}
+<h1>Контакты</h1>
+<div class="two-col">
+  <section aria-labelledby="c1" class="panel">
+    <h2 id="c1">Как нас найти</h2>
+    <address class="addr">Телефон: {{ STUDIO_PHONE }}<br>Почта: <a href="mailto:{{ STUDIO_EMAIL }}">{{ STUDIO_EMAIL }}</a><br>Работаем ежедневно с 08:00 до 23:00</address>
+  </section>
+  <section aria-labelledby="c2">
+    <h2 id="c2">Написать нам</h2>
+    <form method="post" class="form" novalidate>
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        <div class="field">{{ field.label_tag }}{{ field }}
+          {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}{{ field.errors }}</div>
+      {% endfor %}
+      <button type="submit" class="btn">Отправить</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

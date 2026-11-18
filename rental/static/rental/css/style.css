@@ -110,7 +110,7 @@ code { background: var(--accent-soft); padding: .1em .35em; border-radius: 4px; 
 .form-narrow { max-width: 420px; }
 .field { margin-bottom: .9rem; }
 .field label, legend { display: block; font-weight: 600; margin-bottom: .25rem; }
-input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], input[type="search"], input[type="file"], select, textarea {
+input[type="text"], input[type="tel"], input[type="email"], input[type="password"], input[type="number"], input[type="date"], input[type="search"], input[type="file"], select, textarea {
   width: 100%; padding: .55rem .7rem; border: 1px solid var(--field); border-radius: 8px; font: inherit; background: #fff; min-height: 44px; color: var(--text);
 }
 textarea { resize: vertical; }
@@ -210,3 +210,50 @@ tr:last-child td { border-bottom: 0; }
 .main-nav a.btn:hover { color: #fff; }
 .main-nav a.btn[aria-current="page"] { border-bottom: 0; color: #fff; }
 .footer-row address { font-style: normal; }
+
+/* Занятие 8–9: новые страницы, нажимаемые зоны ≥ 40 px, динамические элементы */
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }
+.btn-small { min-height: 40px; }
+.nav-toggle { min-height: 44px; }
+.main-nav a, .main-nav .link-button { display: inline-flex; align-items: center; min-height: 44px; }
+.main-nav a.btn { min-height: 40px; }
+.tap { display: inline-flex; align-items: center; min-height: 40px; }
+.pagination { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin: 1.5rem 0 0; }
+.pagination a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 .9rem; border: 1px solid var(--field); border-radius: 8px; background: var(--surface); text-decoration: none; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; }
+.list-cards > li { margin-bottom: .6rem; }
+.dl { display: grid; grid-template-columns: 1fr; gap: .15rem 1rem; margin: 0 0 1rem; }
+.dl dt { color: var(--muted); }
+.dl dd { margin: 0 0 .4rem; }
+.addr { font-style: normal; margin-bottom: .8rem; line-height: 1.8; }
+.nav-search input { min-height: 44px; width: 100%; padding: .4rem .7rem; border: 1px solid var(--field); border-radius: 8px; font: inherit; }
+.search-row { display: flex; gap: .6rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+.search-row input { flex: 1 1 220px; min-height: 44px; padding: .5rem .7rem; border: 1px solid var(--field); border-radius: 8px; font: inherit; }
+.client-error { color: var(--danger); font-size: .9rem; margin-top: .25rem; }
+[aria-invalid="true"] { border-color: var(--danger) !important; border-width: 2px !important; }
+.errorlist li::before { content: "⚠ "; }
+.filters-inline { grid-template-columns: 1fr; align-items: end; }
+.filter-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.center-row { text-align: center; margin: 1.2rem 0 0; }
+.card-grid.is-loading { opacity: .5; transition: opacity .15s; }
+.footer-nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+.footer-nav a, .site-footer address a { display: inline-flex; align-items: center; min-height: 40px; }
+.dialog { border: 0; border-radius: var(--radius); padding: 1.4rem; max-width: min(92vw, 440px); box-shadow: 0 10px 40px rgba(0, 0, 0, .3); }
+.dialog::backdrop { background: rgba(31, 29, 26, .55); }
+.dialog h2 { margin-top: 0; }
+.dialog .btn-row, .btn-row { display: flex; flex-wrap: wrap; gap: .8rem; }
+.dialog .btn-light { background: var(--accent-soft); }
+.check { min-height: 40px; align-items: center; }
+.check input { width: 22px; height: 22px; }
+.slot { min-height: 44px; }
+@media (min-width: 1024px) {
+  .nav-search input { width: 150px; }
+  .dl { grid-template-columns: 260px 1fr; }
+  .filters-inline { grid-template-columns: 220px 220px auto; }
+}
+.logo { display: inline-flex; align-items: center; min-height: 44px; }
+.main-nav { flex-wrap: wrap; }
+@media (min-width: 1024px) { .main-nav { justify-content: flex-end; gap: .2rem 1rem; } .nav-search input { width: 120px; } }
+.review-name { font-size: 1rem; margin: 0; }
+.help { font-size: .9rem; margin-top: .2rem; }
+.help ul { margin: .2rem 0; padding-left: 1.2rem; }

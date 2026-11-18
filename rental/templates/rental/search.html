@@ -1,0 +1,31 @@
+{% extends "rental/base.html" %}
+{% block title %}Поиск{% endblock %}
+{% block content %}
+<h1>Поиск{% if q %}: «{{ q }}»{% endif %}</h1>
+<form method="get" action="{% url 'rental:search' %}" class="search-row" role="search">
+  <label class="sr-only" for="search-q">Что искать</label>
+  <input id="search-q" type="search" name="q" value="{{ q }}" placeholder="Название зала или оборудования" maxlength="100">
+  <button class="btn" type="submit">Найти</button>
+</form>
+{% if not q %}
+  <p>Введите название зала, оборудования или инвентарный номер.</p>
+{% else %}
+  <section aria-labelledby="sh-title">
+    <h2 id="sh-title">Залы ({{ halls|length }})</h2>
+    <div class="card-grid">
+      {% for hall in halls %}
+        <article class="card">
+          <div class="card-body"><h3><a href="{% url 'rental:hall_detail' hall.slug %}">{{ hall.name }}</a></h3><p class="muted">{{ hall.area }} м² · до {{ hall.capacity }} чел.</p><p>{{ hall.description|truncatechars:90 }}</p></div>
+        </article>
+      {% empty %}<p>Залов не найдено.</p>{% endfor %}
+    </div>
+  </section>
+  <section aria-labelledby="se-title">
+    <h2 id="se-title">Оборудование ({{ equipment_count }})</h2>
+    <div class="card-grid">
+      {% for e in page %}{% include "rental/_equipment_card.html" with e=e eager=forloop.first %}{% empty %}<p>Оборудования не найдено.</p>{% endfor %}
+    </div>
+    {% include "rental/_pagination.html" %}
+  </section>
+{% endif %}
+{% endblock %}

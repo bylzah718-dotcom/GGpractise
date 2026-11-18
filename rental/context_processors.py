@@ -12,6 +12,7 @@ def nav_items(request, user):
     if user.is_authenticated:
         items.append(("rental:booking_list", "Все брони" if permissions.is_admin(user) else "Мои брони", False))
         items.append(("rental:booking_create", "Забронировать", True))
+        items.append(("rental:profile", "Кабинет", False))
         if permissions.can_manage_equipment(user):
             items.append(("rental:stats", "Показатели", False))
         if permissions.is_admin(user):
@@ -34,6 +35,8 @@ def roles(request):
         "STUDIO_NAME": settings.STUDIO_NAME,
         "STUDIO_PHONE": settings.STUDIO_PHONE,
         "STUDIO_EMAIL": settings.STUDIO_EMAIL,
+        "STUDIO_OPEN_HOUR": settings.STUDIO_OPEN_HOUR,
+        "STUDIO_CLOSE_HOUR": settings.STUDIO_CLOSE_HOUR,
         "DISCOUNT_FROM_HOURS": settings.DISCOUNT_FROM_HOURS,
         "DISCOUNT_PERCENT": settings.DISCOUNT_PERCENT,
     }

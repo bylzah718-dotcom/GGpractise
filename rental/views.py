@@ -12,12 +12,13 @@ from django.core.paginator import Paginator
 from django.db.models import Avg, Count, Min, Q, Sum
 from django.db.models.functions import TruncMonth
 from django.http import Http404, HttpResponse, JsonResponse
+from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from . import emails, permissions, services
-from .forms import BookingForm, EquipmentForm, PenaltyForm, RegisterForm, ReviewForm
+from .forms import BookingForm, ContactForm, EquipmentForm, PenaltyForm, RegisterForm, ReviewForm
 from .models import Booking, BookingEquipment, Equipment, Hall, MakeupSeat, Penalty, Review, Tariff
 
 PAGE_SIZE = 20
@@ -84,7 +85,18 @@ def home(request):
         .annotate(min_price=Min("tariffs__price_per_hour"), avg_rating=Avg("reviews__rating"))
         .order_by("name")
     )
-    return render(request, "rental/home.html", {"halls": halls})
+    capacity = parse_int(request.GET.get("capacity"))
+    max_price = parse_int(request.GET.get("max_price"))
+    if capacity:
+        halls = halls.filter(capacity__gte=capacity)
+    if max_price:
+        halls = halls.filter(min_price__lte=max_price)
+    page, query_string = paginate(request, halls)
+    return render(request, "rental/home.html", {
+        "page": page, "halls": page, "query_string": query_string,
+        "capacity": request.GET.get("capacity", ""), "max_price": request.GET.get("max_price", ""),
+        "filtered": bool(capacity or max_price),
+    })
 
 
 def hall_detail(request, slug):
@@ -168,7 +180,8 @@ def review_delete(request, pk):
 EQUIPMENT_SORTS = {"name": "name", "price": "price_per_hour", "category": "category"}
 
 
-def equipment_list(request):
+def filtered_equipment(request):
+    """Общая выборка для страницы каталога и для JSON-API живого поиска."""
     qs = Equipment.objects.all()
     if not permissions.can_manage_equipment(request.user):
         qs = qs.exclude(status=Equipment.RETIRED)
@@ -198,14 +211,37 @@ def equipment_list(request):
     field = EQUIPMENT_SORTS.get(sort, "name")
     descending = request.GET.get("dir") == "desc"
     qs = qs.order_by(f"-{field}" if descending else field, "inventory_number")
+    return qs, {"q": q, "category": category, "status": status, "sort": sort if sort in EQUIPMENT_SORTS else "name",
+                "dir": "desc" if descending else "asc"}
 
+
+def equipment_list(request):
+    qs, params = filtered_equipment(request)
     page, query_string = paginate(request, qs)
     return render(request, "rental/equipment_list.html", {
-        "page": page, "query_string": query_string, "q": q, "category": category, "status": status,
+        "page": page, "query_string": query_string, **params,
         "max_price": request.GET.get("max_price", ""), "free_date": request.GET.get("free_date", ""),
-        "sort": sort if sort in EQUIPMENT_SORTS else "name", "dir": "desc" if descending else "asc",
         "categories": Equipment.CATEGORIES, "statuses": Equipment.STATUSES,
     })
+
+
+@require_GET
+def api_equipment(request):
+    """JSON для живого поиска каталога: те же фильтры, что и у страницы, постранично по 20."""
+    qs, _ = filtered_equipment(request)
+    page, _ = paginate(request, qs)
+    manage = permissions.can_manage_equipment(request.user)
+    items = []
+    for e in page:
+        items.append({
+            "id": e.pk, "name": e.name, "category": e.get_category_display(), "inventory_number": e.inventory_number,
+            "status": e.status, "status_label": e.get_status_display(), "price": str(e.price_per_hour.normalize()),
+            "image": e.image.url if e.image else "",
+            "edit_url": reverse("rental:equipment_edit", args=[e.pk]) if manage else "",
+            "delete_url": reverse("rental:equipment_delete", args=[e.pk]) if manage else "",
+        })
+    return JsonResponse({"count": page.paginator.count, "page": page.number, "pages": page.paginator.num_pages,
+                         "has_next": page.has_next(), "items": items})
 
 
 @permissions.equipment_manager_required
@@ -605,3 +641,58 @@ def api_stats(request):
         "by_hall": [{"label": r["hall__name"], "value": float(r["revenue"]), "count": r["count"]} for r in s["by_hall"]],
         "by_month": [{"label": f"{r['month']:%m.%Y}", "value": float(r["revenue"]), "count": r["count"]} for r in s["by_month"]],
     })
+
+
+# ---------- личный кабинет, поиск, статические страницы, контакты ----------
+
+@login_required
+def profile(request):
+    user = request.user
+    own = Booking.objects.filter(user=user).select_related("hall")
+    by_status = {row["status"]: row["n"] for row in own.values("status").annotate(n=Count("pk"))}
+    now = timezone.now()
+    context = {
+        "recent": own.order_by("-start")[:5],
+        "upcoming": own.filter(status__in=Booking.ACTIVE_STATUSES, start__gte=now).count(),
+        "by_status": [(label, by_status.get(code, 0)) for code, label in Booking.STATUSES],
+        "total": own.count(),
+        "spent": own.filter(status__in=[Booking.CONFIRMED, Booking.COMPLETED]).aggregate(s=Sum("total_price"))["s"] or 0,
+        "penalties": Penalty.objects.filter(booking__user=user).select_related("booking", "equipment"),
+        "my_reviews": Review.objects.filter(author=user).select_related("hall"),
+    }
+    return render(request, "rental/profile.html", context)
+
+
+@require_GET
+def search(request):
+    q = request.GET.get("q", "").strip()
+    halls, items = Hall.objects.none(), Equipment.objects.none()
+    if q:
+        halls = Hall.objects.filter(is_active=True).filter(Q(name__icontains=q) | Q(description__icontains=q))
+        items = Equipment.objects.filter(Q(name__icontains=q) | Q(description__icontains=q) | Q(inventory_number__icontains=q))
+        if not permissions.can_manage_equipment(request.user):
+            items = items.exclude(status=Equipment.RETIRED)
+        items = items.order_by("name")
+    page, query_string = paginate(request, items)
+    return render(request, "rental/search.html", {
+        "q": q, "halls": halls, "page": page, "query_string": query_string, "equipment_count": page.paginator.count,
+    })
+
+
+def rules(request):
+    return render(request, "rental/rules.html", {"max_hours": settings.MAX_BOOKING_HOURS})
+
+
+def contacts(request):
+    initial = {}
+    if request.user.is_authenticated:
+        initial = {"name": request.user.get_username(), "email": request.user.email}
+    form = ContactForm(request.POST or None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        msg = form.save(commit=False)
+        if request.user.is_authenticated:
+            msg.user = request.user
+        msg.save()
+        messages.success(request, "Спасибо! Сообщение отправлено, мы ответим на указанную почту.")
+        return redirect("rental:contacts")
+    return render(request, "rental/contacts.html", {"form": form})

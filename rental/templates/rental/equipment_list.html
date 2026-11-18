@@ -6,7 +6,7 @@
   {% if can_manage_equipment %}<a class="btn btn-small" href="{% url 'rental:equipment_create' %}">Добавить</a>{% endif %}
 </div>
 
-<form method="get" class="filters">
+<form method="get" class="filters" id="eq-form">
   <label>Поиск <input type="search" name="q" value="{{ q }}" placeholder="название или инв. номер"></label>
   <label>Категория
     <select name="category"><option value="">Все</option>{% for v, l in categories %}<option value="{{ v }}"{% if v == category %} selected{% endif %}>{{ l }}</option>{% endfor %}</select>
@@ -26,21 +26,16 @@
   <label>Порядок
     <select name="dir"><option value="asc"{% if dir == "asc" %} selected{% endif %}>По возрастанию</option><option value="desc"{% if dir == "desc" %} selected{% endif %}>По убыванию</option></select>
   </label>
-  <div class="filter-actions"><button type="submit" class="btn btn-small">Применить</button> <a href="{% url 'rental:equipment_list' %}">Сбросить</a></div>
+  <div class="filter-actions"><button type="submit" class="btn btn-small">Применить</button> <a class="tap" href="{% url 'rental:equipment_list' %}">Сбросить</a></div>
 </form>
 
-<div class="card-grid">
-  {% for e in page %}
-    <article class="card">
-      {% if e.image %}<img src="{{ e.image.url }}" alt="{{ e.name }}" loading="lazy" width="400" height="250">{% else %}<div class="img-placeholder">Нет фото</div>{% endif %}
-      <div class="card-body">
-        <h3>{{ e.name }}</h3>
-        <p class="muted">{{ e.get_category_display }} · {{ e.inventory_number }}</p>
-        <p><span class="badge badge-{{ e.status }}">{{ e.get_status_display }}</span> <span class="price">{{ e.price_per_hour|floatformat:"-2" }} ₽/час</span></p>
-        {% if can_manage_equipment %}<p><a href="{% url 'rental:equipment_edit' e.pk %}">Изменить</a> · <a href="{% url 'rental:equipment_delete' e.pk %}">Удалить</a></p>{% endif %}
-      </div>
-    </article>
+<p class="muted" id="eq-status" role="status" aria-live="polite">Найдено: {{ page.paginator.count }}</p>
+<h2 class="sr-only">Список оборудования</h2>
+<div class="card-grid" id="eq-grid" data-url="{% url 'rental:api_equipment' %}" data-page="{{ page.number }}" data-has-next="{{ page.has_next|yesno:'1,0' }}" aria-busy="false">
+  {% for e in page %}{% include "rental/_equipment_card.html" with e=e eager=forloop.first %}
   {% empty %}<p>По вашему запросу ничего не найдено.</p>{% endfor %}
 </div>
-{% include "rental/_pagination.html" %}
+<p class="center-row"><button type="button" class="btn btn-light" id="eq-more" hidden>Показать ещё</button></p>
+<div id="eq-pager">{% include "rental/_pagination.html" %}</div>
 {% endblock %}
+{% block scripts %}{% load static %}<script src="{% static 'rental/js/equipment_live.js' %}"></script>{% endblock %}

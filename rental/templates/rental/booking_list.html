@@ -29,7 +29,7 @@
   <label>Порядок
     <select name="dir"><option value="desc"{% if dir == "desc" %} selected{% endif %}>По убыванию</option><option value="asc"{% if dir == "asc" %} selected{% endif %}>По возрастанию</option></select>
   </label>
-  <div class="filter-actions"><button type="submit" class="btn btn-small">Применить</button> <a href="{% url 'rental:booking_list' %}">Сбросить</a></div>
+  <div class="filter-actions"><button type="submit" class="btn btn-small">Применить</button> <a class="tap" href="{% url 'rental:booking_list' %}">Сбросить</a></div>
 </form>
 
 <div class="table-wrap">

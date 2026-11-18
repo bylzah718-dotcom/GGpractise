@@ -14,6 +14,6 @@
   {% endfor %}
   {% if item and item.image %}<p>Текущее фото:<br><img src="{{ item.image.url }}" alt="{{ item.name }}" width="200"></p>{% endif %}
   <p class="muted">Фото: JPG, PNG или WEBP, до 2 МБ.</p>
-  <button type="submit" class="btn">Сохранить</button> <a href="{% url 'rental:equipment_list' %}">Отмена</a>
+  <button type="submit" class="btn">Сохранить</button> <a class="tap" href="{% url 'rental:equipment_list' %}">Отмена</a>
 </form>
 {% endblock %}

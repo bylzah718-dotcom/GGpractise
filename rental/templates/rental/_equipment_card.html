@@ -1,0 +1,9 @@
+<article class="card">
+  {% if e.image %}<img src="{{ e.image.url }}" alt="{{ e.name }}" {% if not eager %}loading="lazy" {% endif %}width="400" height="250">{% else %}<div class="img-placeholder">Нет фото</div>{% endif %}
+  <div class="card-body">
+    <h3>{{ e.name }}</h3>
+    <p class="muted">{{ e.get_category_display }} · {{ e.inventory_number }}</p>
+    <p><span class="badge badge-{{ e.status }}">{{ e.get_status_display }}</span> <span class="price">{{ e.price_per_hour|floatformat:"-2" }} ₽/час</span></p>
+    {% if can_manage_equipment %}<p><a class="tap" href="{% url 'rental:equipment_edit' e.pk %}">Изменить</a> · <a class="tap" href="{% url 'rental:equipment_delete' e.pk %}">Удалить</a></p>{% endif %}
+  </div>
+</article>

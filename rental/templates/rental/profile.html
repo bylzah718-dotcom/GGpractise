@@ -1,0 +1,51 @@
+{% extends "rental/base.html" %}
+{% block title %}Личный кабинет{% endblock %}
+{% block content %}
+<h1>Личный кабинет</h1>
+<div class="two-col">
+  <section aria-labelledby="acc-title" class="panel">
+    <h2 id="acc-title">Аккаунт</h2>
+    <dl class="dl">
+      <dt>Логин</dt><dd>{{ user.username }}</dd>
+      <dt>Почта</dt><dd>{{ user.email|default:"не указана" }}</dd>
+      <dt>Роль</dt><dd>{{ role_label }}</dd>
+      <dt>В студии с</dt><dd>{{ user.date_joined|date:"d E Y" }}</dd>
+    </dl>
+    <p><a class="btn btn-light btn-small" href="{% url 'rental:password_change' %}">Сменить пароль</a></p>
+  </section>
+  <section aria-labelledby="sum-title" class="panel">
+    <h2 id="sum-title">Мои брони в цифрах</h2>
+    <dl class="dl">
+      <dt>Всего броней</dt><dd>{{ total }}</dd>
+      <dt>Предстоящих</dt><dd>{{ upcoming }}</dd>
+      {% for label, n in by_status %}<dt>{{ label }}</dt><dd>{{ n }}</dd>{% endfor %}
+      <dt>Сумма подтверждённых и завершённых</dt><dd>{{ spent|floatformat:"-2" }} ₽</dd>
+    </dl>
+  </section>
+</div>
+
+<section aria-labelledby="recent-title">
+  <div class="page-head"><h2 id="recent-title">Последние брони</h2><a class="tap" href="{% url 'rental:booking_list' %}">Все брони</a></div>
+  {% if recent %}
+  <ul class="plain list-cards">
+    {% for b in recent %}
+    <li class="panel"><a href="{% url 'rental:booking_detail' b.pk %}">Бронь №{{ b.pk }}</a> · {{ b.hall.name }} · {{ b.start|date:"d.m.Y H:i" }} · <span class="badge badge-{{ b.status }}">{{ b.get_status_display }}</span> · {{ b.total_price|floatformat:"-2" }} ₽</li>
+    {% endfor %}
+  </ul>
+  {% else %}<p>Броней пока нет. <a href="{% url 'rental:booking_create' %}">Забронировать зал</a></p>{% endif %}
+</section>
+
+<section aria-labelledby="pen-title">
+  <h2 id="pen-title">Штрафы</h2>
+  {% for p in penalties %}
+    <p>{{ p.created_at|date:"d.m.Y" }} · {{ p.equipment.name|default:"имущество студии" }} · {{ p.amount|floatformat:"-2" }} ₽ · {% if p.is_paid %}оплачен{% else %}не оплачен{% endif %} · <a href="{% url 'rental:booking_detail' p.booking.pk %}">бронь №{{ p.booking.pk }}</a></p>
+  {% empty %}<p>Штрафов нет.</p>{% endfor %}
+</section>
+
+<section aria-labelledby="rev-title">
+  <h2 id="rev-title">Мои отзывы</h2>
+  {% for r in my_reviews %}
+    <article class="review"><header><h3 class="review-name"><a class="tap" href="{% url 'rental:hall_detail' r.hall.slug %}">{{ r.hall.name }}</a></h3> <span class="stars" role="img" aria-label="Оценка {{ r.rating }} из 5">{{ r.rating }}/5</span></header><p>{{ r.text|truncatechars:160 }}</p></article>
+  {% empty %}<p>Отзывов пока нет. Оставить отзыв можно после состоявшейся брони на странице зала.</p>{% endfor %}
+</section>
+{% endblock %}

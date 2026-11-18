@@ -29,8 +29,14 @@ urlpatterns = [
     path("bookings/<int:pk>/penalty/", views.penalty_create, name="penalty_create"),
     path("penalties/<int:pk>/paid/", views.penalty_paid, name="penalty_paid"),
 
+    path("profile/", views.profile, name="profile"),
+    path("search/", views.search, name="search"),
+    path("rules/", views.rules, name="rules"),
+    path("contacts/", views.contacts, name="contacts"),
+
     path("stats/", views.stats, name="stats"),
     path("api/quote/", views.api_quote, name="api_quote"),
+    path("api/equipment/", views.api_equipment, name="api_equipment"),
     path("api/schedule/", views.api_schedule, name="api_schedule"),
     path("api/stats/", views.api_stats, name="api_stats"),
 

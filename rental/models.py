@@ -5,6 +5,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
+from .images import shrink_field_file
 from .validators import validate_image, validate_reference_file
 
 
@@ -26,6 +27,10 @@ class Hall(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        shrink_field_file(self.image)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse("rental:hall_detail", args=[self.slug])
@@ -127,6 +132,10 @@ class Equipment(models.Model):
 
     def __str__(self):
         return f"{self.name} [{self.inventory_number}]"
+
+    def save(self, *args, **kwargs):
+        shrink_field_file(self.image)
+        super().save(*args, **kwargs)
 
     @property
     def is_available(self) -> bool:
@@ -259,3 +268,23 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.author} → {self.hall}: {self.rating}/5"
+
+
+class ContactMessage(models.Model):
+    """Обращение из формы на странице «Контакты»."""
+
+    name = models.CharField("Имя", max_length=80)
+    email = models.EmailField("Электронная почта")
+    phone = models.CharField("Телефон", max_length=20, blank=True)
+    message = models.TextField("Сообщение", max_length=1000)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="contact_messages", verbose_name="Пользователь")
+    created_at = models.DateTimeField("Дата", auto_now_add=True)
+    is_processed = models.BooleanField("Обработано", default=False)
+
+    class Meta:
+        verbose_name = "обращение"
+        verbose_name_plural = "обращения"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Обращение от {self.name} ({self.created_at:%d.%m.%Y})"

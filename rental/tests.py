@@ -427,3 +427,62 @@ class SeedTests(MediaTestCase):
         for hall in Hall.objects.all():
             self.assertTrue(Hall.objects.get(pk=hall.pk).image.name)
             hall.image.delete(save=False)
+
+
+class Lesson89Tests(MediaTestCase):
+    """Новые страницы, форма контактов, JSON каталога, сжатие изображений."""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_demo", verbosity=0)
+        cls.user = User.objects.create_user("zed", "zed@example.ru", "Pass-12345-zed")
+
+    def test_static_and_search_pages_open_for_guest(self):
+        for name in ("rental:rules", "rental:contacts", "rental:search", "rental:home", "rental:equipment_list"):
+            self.assertEqual(self.client.get(reverse(name)).status_code, 200, name)
+        r = self.client.get(reverse("rental:search"), {"q": "Лофт"})
+        self.assertContains(r, "Лофт")
+
+    def test_profile_requires_login_and_shows_own_data(self):
+        r = self.client.get(reverse("rental:profile"))
+        self.assertEqual(r.status_code, 302)
+        self.client.force_login(self.user)
+        r = self.client.get(reverse("rental:profile"))
+        self.assertContains(r, "zed@example.ru")
+
+    def test_contact_form_saves_and_redirects(self):
+        from .models import ContactMessage
+        data = {"name": "Ира", "email": "ira@example.ru", "phone": "8 900 123 45 67", "message": "Хочу снять зал на вечер"}
+        r = self.client.post(reverse("rental:contacts"), data, follow=True)
+        self.assertRedirects(r, reverse("rental:contacts"))
+        self.assertContains(r, "Сообщение отправлено")
+        self.assertEqual(ContactMessage.objects.get().phone, "+7 900 123-45-67")
+
+    def test_contact_form_errors_keep_values(self):
+        data = {"name": "И", "email": "не-почта", "phone": "123", "message": "коротко"}
+        r = self.client.post(reverse("rental:contacts"), data)
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Введите телефон в формате +7 900 000-00-00.")
+        self.assertContains(r, "Введите почту в формате name@example.ru.")
+        self.assertContains(r, 'value="не-почта"')
+
+    def test_equipment_api_filters_and_paginates(self):
+        r = self.client.get(reverse("rental:api_equipment"), {"category": "light"})
+        data = r.json()
+        self.assertLessEqual(len(data["items"]), 20)
+        self.assertEqual(data["count"], Equipment.objects.filter(category="light").exclude(status="retired").count())
+        self.assertTrue(all(i["category"] for i in data["items"]))
+        self.assertEqual(self.client.get(reverse("rental:api_equipment"), {"q": "zzzzzz"}).json()["count"], 0)
+
+    def test_home_hall_filters(self):
+        r = self.client.get(reverse("rental:home"), {"capacity": 19})
+        self.assertContains(r, "Циклорама")
+        self.assertNotContains(r, "Винтаж")
+
+    def test_big_image_is_shrunk(self):
+        buf = BytesIO()
+        Image.new("RGB", (3000, 2000), (120, 80, 40)).save(buf, "JPEG", quality=95)
+        up = SimpleUploadedFile("big.jpg", buf.getvalue(), content_type="image/jpeg")
+        hall = Hall.objects.create(name="Большой", slug="big", area=20, capacity=5, image=up)
+        with Image.open(hall.image.path) as img:
+            self.assertLessEqual(max(img.size), 1200)

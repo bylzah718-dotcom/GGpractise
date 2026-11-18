@@ -6,6 +6,6 @@
 <form method="post" class="form">
   {% csrf_token %}
   <button type="submit" class="btn btn-danger">Да, удалить</button>
-  <a href="{% if '/' in cancel_url %}{{ cancel_url }}{% else %}{% url cancel_url %}{% endif %}">Отмена</a>
+  <a class="tap" href="{% if '/' in cancel_url %}{{ cancel_url }}{% else %}{% url cancel_url %}{% endif %}">Отмена</a>
 </form>
 {% endblock %}

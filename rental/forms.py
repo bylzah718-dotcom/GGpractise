@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -5,7 +7,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 
 from . import services
-from .models import Equipment, Hall, MakeupSeat, Penalty, Review
+from .models import ContactMessage, Equipment, Hall, MakeupSeat, Penalty, Review
 from .validators import validate_reference_file
 
 User = get_user_model()
@@ -54,7 +56,7 @@ def _hour_choices():
 
 class BookingForm(forms.Form):
     hall = forms.ModelChoiceField(Hall.objects.none(), label="Зал", empty_label=None)
-    date = forms.DateField(label="Дата", widget=forms.DateInput(attrs={"type": "date"}))
+    date = forms.DateField(label="Дата", widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"))
     start_hour = forms.TypedChoiceField(label="Начало", choices=_hour_choices, coerce=int)
     hours = forms.TypedChoiceField(label="Длительность, ч", coerce=int, choices=[])
     people = forms.IntegerField(label="Человек на съёмке", min_value=1, initial=1)
@@ -136,3 +138,49 @@ class ReviewForm(forms.ModelForm):
         model = Review
         fields = ("rating", "text")
         widgets = {"text": forms.Textarea(attrs={"rows": 4})}
+
+
+PHONE_RE = re.compile(r"^(?:\+7|8)[\s(-]*(\d{3})[\s)-]*(\d{3})[\s-]*(\d{2})[\s-]*(\d{2})$")
+
+
+def normalize_phone(value: str) -> str:
+    """'89001234567' → '+7 900 123-45-67'. Не подходит по формату — ValidationError."""
+    m = PHONE_RE.match(value.strip())
+    if not m:
+        raise forms.ValidationError("Введите телефон в формате +7 900 000-00-00.")
+    a, b, c, d = m.groups()
+    return f"+7 {a} {b}-{c}-{d}"
+
+
+class ContactForm(forms.ModelForm):
+    class Meta:
+        model = ContactMessage
+        fields = ("name", "email", "phone", "message")
+        widgets = {
+            "name": forms.TextInput(attrs={"autocomplete": "name", "placeholder": "Как к вам обращаться"}),
+            "email": forms.EmailInput(attrs={"autocomplete": "email", "placeholder": "name@example.ru"}),
+            "phone": forms.TextInput(attrs={"type": "tel", "autocomplete": "tel", "placeholder": "+7 900 000-00-00", "data-phone": "1"}),
+            "message": forms.Textarea(attrs={"rows": 5, "minlength": 10, "maxlength": 1000}),
+        }
+        error_messages = {
+            "name": {"required": "Укажите, как к вам обращаться."},
+            "email": {"required": "Укажите электронную почту.", "invalid": "Введите почту в формате name@example.ru."},
+            "message": {"required": "Напишите сообщение."},
+        }
+        help_texts = {"phone": "Необязательно. Формат: +7 900 000-00-00.", "message": "От 10 до 1000 символов."}
+
+    def clean_name(self):
+        name = self.cleaned_data["name"].strip()
+        if len(name) < 2:
+            raise forms.ValidationError("Имя должно быть не короче 2 символов.")
+        return name
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone", "").strip()
+        return normalize_phone(phone) if phone else ""
+
+    def clean_message(self):
+        text = self.cleaned_data["message"].strip()
+        if len(text) < 10:
+            raise forms.ValidationError("Сообщение слишком короткое: напишите хотя бы 10 символов.")
+        return text

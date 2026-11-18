@@ -17,10 +17,13 @@
         {% for item in nav_items %}
           <a href="{% url item.name %}"{% if item.button %} class="btn btn-small"{% endif %}{% if item.current %} aria-current="page"{% endif %}>{{ item.label }}</a>
         {% endfor %}
+        <form class="nav-search" role="search" action="{% url 'rental:search' %}" method="get">
+          <label class="sr-only" for="nav-q">Поиск по сайту</label>
+          <input id="nav-q" type="search" name="q" placeholder="Поиск" maxlength="100">
+        </form>
         {% if user.is_authenticated %}
           <span class="nav-user">{{ user.username }} <small>{{ role_label }}</small></span>
-          <a href="{% url 'rental:password_change' %}">Пароль</a>
-          <form method="post" action="{% url 'rental:logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button">Выйти</button></form>
+                    <form method="post" action="{% url 'rental:logout' %}" class="inline-form">{% csrf_token %}<button type="submit" class="link-button">Выйти</button></form>
         {% endif %}
       </nav>
     </div>
@@ -38,10 +41,18 @@
   <footer class="site-footer">
     <div class="container footer-row">
       <p>© Фотостудия «{{ STUDIO_NAME }}». Ежедневно с 08:00 до 23:00 · скидка {{ DISCOUNT_PERCENT }}% при брони от {{ DISCOUNT_FROM_HOURS }} часов</p>
+      <nav aria-label="Служебные страницы" class="footer-nav"><a href="{% url 'rental:rules' %}">Правила</a> <a href="{% url 'rental:contacts' %}">Контакты</a></nav>
       <address>Тел. {{ STUDIO_PHONE }} · <a href="mailto:{{ STUDIO_EMAIL }}">{{ STUDIO_EMAIL }}</a></address>
     </div>
   </footer>
+  <dialog id="confirm-dialog" class="dialog" aria-labelledby="dlg-title">
+    <h2 id="dlg-title">Подтвердите действие</h2>
+    <p data-dialog-text></p>
+    <div class="btn-row"><button type="button" class="btn btn-danger" data-dialog-yes>Да, продолжить</button><button type="button" class="btn btn-light" data-dialog-no>Нет, вернуться</button></div>
+  </dialog>
   <script src="{% static 'rental/js/base.js' %}"></script>
+  <script src="{% static 'rental/js/validate.js' %}"></script>
+  <script src="{% static 'rental/js/modal.js' %}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -54,7 +54,7 @@
   {% if can_review %}<p><a class="btn btn-small" href="{% url 'rental:review_create' hall.slug %}">Оставить отзыв</a></p>{% endif %}
   {% for r in reviews %}
     <article class="review">
-      <header><strong>{{ r.author.username }}</strong> <span class="stars" aria-label="Оценка {{ r.rating }} из 5">{{ "★★★★★"|slice:r.rating }}</span> <small class="muted">{{ r.created_at|date:"d.m.Y" }}</small></header>
+      <header><h3 class="review-name">{{ r.author.username }}</h3> <span class="stars" role="img" aria-label="Оценка {{ r.rating }} из 5">{{ "★★★★★"|slice:r.rating }}</span> <small class="muted">{{ r.created_at|date:"d.m.Y" }}</small></header>
       <p>{{ r.text }}</p>
       {% if r.author_id == user.pk %}<a href="{% url 'rental:review_edit' r.pk %}">Изменить</a> · {% endif %}
       {% if r.author_id == user.pk or is_studio_admin %}<a href="{% url 'rental:review_delete' r.pk %}">Удалить</a>{% endif %}

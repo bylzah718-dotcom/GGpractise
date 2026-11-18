@@ -63,7 +63,7 @@
   {% endif %}
   {% if is_owner and booking.can_edit %}<a class="btn btn-small btn-light" href="{% url 'rental:booking_edit' booking.pk %}">Изменить</a>{% endif %}
   {% if booking.can_cancel and is_owner or booking.can_cancel and is_studio_admin %}
-    <form method="post" action="{% url 'rental:booking_cancel' booking.pk %}" class="inline-form">{% csrf_token %}<button class="btn btn-small btn-danger" type="submit">Отменить бронь</button></form>
+    <form method="post" action="{% url 'rental:booking_cancel' booking.pk %}" class="inline-form" data-confirm="Отменить бронь №{{ booking.pk }}? Зал и оборудование освободятся, действие нельзя отменить.">{% csrf_token %}<button class="btn btn-small btn-danger" type="submit">Отменить бронь</button></form>
   {% endif %}
   {% if booking.can_delete and is_owner or booking.can_delete and is_studio_admin %}<a class="btn btn-small btn-danger" href="{% url 'rental:booking_delete' booking.pk %}">Удалить</a>{% endif %}
   <a href="{% url 'rental:booking_list' %}">К списку</a>

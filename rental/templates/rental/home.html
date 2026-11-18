@@ -12,10 +12,15 @@
 
 <section aria-labelledby="halls-title">
   <h2 id="halls-title">Наши залы</h2>
+  <form method="get" class="filters filters-inline" action="{% url 'rental:home' %}#halls-title">
+    <label>Вместимость от, чел. <input type="number" name="capacity" min="1" max="200" value="{{ capacity }}" inputmode="numeric"></label>
+    <label>Цена часа до, ₽ <input type="number" name="max_price" min="0" step="50" value="{{ max_price }}" inputmode="numeric"></label>
+    <div class="filter-actions"><button type="submit" class="btn btn-small">Подобрать</button>{% if filtered %} <a class="tap" href="{% url 'rental:home' %}">Сбросить</a>{% endif %}</div>
+  </form>
   <div class="card-grid">
     {% for hall in halls %}
       <article class="card">
-        {% if hall.image %}<img src="{{ hall.image.url }}" alt="Зал «{{ hall.name }}»: общий вид" width="800" height="500" loading="lazy">{% else %}<div class="img-placeholder" role="img" aria-label="Фото зала «{{ hall.name }}» пока не загружено">Нет фото</div>{% endif %}
+        {% if hall.image %}<img src="{{ hall.image.url }}" alt="Зал «{{ hall.name }}»: общий вид" width="800" height="500"{% if not forloop.first and forloop.counter > 3 %} loading="lazy"{% endif %}>{% else %}<div class="img-placeholder" role="img" aria-label="Фото зала «{{ hall.name }}» пока не загружено">Нет фото</div>{% endif %}
         <div class="card-body">
           <h3>{{ hall.name }}</h3>
           <p class="muted">{{ hall.area }} м² · до {{ hall.capacity }} чел.{% if hall.avg_rating %} · ★ {{ hall.avg_rating|floatformat:1 }}{% endif %}</p>
@@ -25,9 +30,10 @@
         </div>
       </article>
     {% empty %}
-      <p>Залов пока нет. Загрузите демо-данные командой <code>python manage.py seed_demo</code>.</p>
+      <p>{% if filtered %}Под эти условия залов нет. Попробуйте изменить вместимость или цену.{% else %}Залов пока нет.{% endif %}</p>
     {% endfor %}
   </div>
+  {% include "rental/_pagination.html" %}
 </section>
 
 <section aria-labelledby="how-title">

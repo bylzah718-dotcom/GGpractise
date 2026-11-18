@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import (Booking, BookingEquipment, Equipment, Hall, InteriorZone, MakeupSeat, Penalty, Review, Tariff)
+from .models import (Booking, ContactMessage, BookingEquipment, Equipment, Hall, InteriorZone, MakeupSeat, Penalty, Review, Tariff)
 
 admin.site.site_header = "Фотостудия «Кадр» — администрирование"
 admin.site.site_title = "Фотостудия «Кадр»"
@@ -69,3 +69,11 @@ class ReviewAdmin(admin.ModelAdmin):
 admin.site.register(InteriorZone)
 admin.site.register(Tariff)
 admin.site.register(MakeupSeat)
+
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ("name", "email", "phone", "created_at", "is_processed")
+    list_filter = ("is_processed",)
+    search_fields = ("name", "email", "message")
+    readonly_fields = ("created_at",)
