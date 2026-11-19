@@ -15,7 +15,7 @@ from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
-from PIL import Image, ImageDraw
+from rental import demo_images
 
 from rental import services
 from rental.models import (Booking, Equipment, Hall, InteriorZone, MakeupSeat, Penalty, Review, Tariff)
@@ -91,23 +91,11 @@ class Command(BaseCommand):
         return renters
 
     # ---- залы ----
-    @staticmethod
-    def placeholder(name, color):
-        img = Image.new("RGB", (800, 500), color)
-        draw = ImageDraw.Draw(img)
-        for i in range(500):
-            shade = int(60 * i / 500)
-            draw.line([(0, i), (800, i)], fill=tuple(max(0, c - shade) for c in color))
-        draw.text((30, 440), name.upper(), fill=(255, 255, 255))  # встроенный шрифт PIL без кириллицы — пишем slug
-        buf = io.BytesIO()
-        img.save(buf, "JPEG", quality=80)
-        return ContentFile(buf.getvalue())
-
     def make_halls(self):
         halls = []
         for idx, (name, slug, area, cap, desc, color, base) in enumerate(HALLS):
             hall = Hall.objects.create(name=name, slug=slug, area=area, capacity=cap, description=desc)
-            hall.image.save(f"{slug}.jpg", self.placeholder(slug, color), save=True)
+            hall.image.save(f"{slug}.jpg", demo_images.to_content(demo_images.hall_scene(slug)), save=True)
             for zone_name, zone_desc in (ZONES[idx % 5], ZONES[(idx + 2) % 5]):
                 InteriorZone.objects.create(hall=hall, name=zone_name, description=zone_desc)
             # Тарифы: утро дешевле, вечер дороже, выходные дороже будней
@@ -126,10 +114,12 @@ class Command(BaseCommand):
         counter = 1
         for name, category, price, qty in EQUIPMENT:
             for _ in range(qty):
-                items.append(Equipment.objects.create(
+                unit = Equipment.objects.create(
                     name=name, category=category, price_per_hour=Decimal(price),
                     inventory_number=f"ФС-{counter:04d}", description=f"{name}. Проверено техником, комплект кабелей в наборе.",
-                ))
+                )
+                unit.image.save(f"eq-{counter:04d}.jpg", demo_images.to_content(demo_images.equipment_image(category, name), 80), save=True)
+                items.append(unit)
                 counter += 1
         for item in (items[2], items[17]):  # две единицы в ремонте — для демонстрации статуса
             item.status = Equipment.REPAIR

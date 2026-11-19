@@ -476,8 +476,10 @@ class Lesson89Tests(MediaTestCase):
 
     def test_home_hall_filters(self):
         r = self.client.get(reverse("rental:home"), {"capacity": 19})
-        self.assertContains(r, "Циклорама")
-        self.assertNotContains(r, "Винтаж")
+        names = [h.name for h in r.context["halls"]]
+        self.assertIn("Циклорама", names)
+        self.assertNotIn("Винтаж", names)
+        self.assertEqual(len(r.context["board"]), 6)  # доска показывает все залы независимо от фильтра
 
     def test_big_image_is_shrunk(self):
         buf = BytesIO()
@@ -486,3 +488,19 @@ class Lesson89Tests(MediaTestCase):
         hall = Hall.objects.create(name="Большой", slug="big", area=20, capacity=5, image=up)
         with Image.open(hall.image.path) as img:
             self.assertLessEqual(max(img.size), 1200)
+
+
+class DayBoardTests(MediaTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_demo", verbosity=0)
+
+    def test_board_marks_busy_hours(self):
+        from datetime import timedelta
+        booking = Booking.objects.filter(status__in=Booking.ACTIVE_STATUSES, start__gte=timezone.now()).first()
+        day = timezone.localtime(booking.start).date()
+        row = next(r for r in services.day_board(Hall.objects.all(), day) if r["hall"] == booking.hall)
+        busy_hours = {s["hour"] for s in row["slots"] if s["state"] == "busy"}
+        self.assertTrue(busy_hours)
+        self.assertIn(timezone.localtime(booking.start).hour, busy_hours)
+        self.assertEqual(row["free_count"], sum(1 for s in row["slots"] if s["state"] == "free"))

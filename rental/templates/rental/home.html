@@ -1,47 +1,84 @@
 {% extends "rental/base.html" %}
-{% block title %}Залы{% endblock %}
+{% block title %}Аренда фотостудии{% endblock %}
 {% block content %}
 <section class="hero" aria-labelledby="hero-title">
-  <h1 id="hero-title">Аренда фотостудии «{{ STUDIO_NAME }}»</h1>
-  <p>Шесть залов, свет и реквизит. Выберите зал, время и оборудование — стоимость посчитается сразу. При брони от {{ DISCOUNT_FROM_HOURS }} часов скидка {{ DISCOUNT_PERCENT }}% на аренду зала.</p>
-  <div class="btn-row">
-    <a class="btn" href="{% url 'rental:booking_create' %}">Забронировать зал</a>
-    <a class="btn btn-light" href="{% url 'rental:equipment_list' %}">Каталог оборудования</a>
+  <div class="hero-copy">
+    <h1 id="hero-title">Залы для съёмки по часам</h1>
+    <p class="lead">Шесть залов, постоянный и импульсный свет, фоны и реквизит. Выберите время — цена посчитается сразу, до заявки.</p>
+    <div class="btn-row">
+      <a class="btn btn-lg" href="{% url 'rental:booking_create' %}">Забронировать зал</a>
+      <a class="btn btn-ghost btn-lg" href="{% url 'rental:equipment_list' %}">Каталог оборудования</a>
+    </div>
+    <ul class="facts plain">
+      <li>Ежедневно {{ STUDIO_OPEN_HOUR|stringformat:"02d" }}:00–{{ STUDIO_CLOSE_HOUR }}:00</li>
+      <li>Скидка {{ DISCOUNT_PERCENT }}% от {{ DISCOUNT_FROM_HOURS }} часов аренды зала</li>
+      <li>Свет и фоны добавляются к любой брони</li>
+    </ul>
   </div>
+
+  <section class="board" aria-labelledby="board-title">
+    <div class="board-head">
+      <h2 id="board-title">Свободно {% if board_is_today %}сегодня{% else %}завтра{% endif %}, {{ board_day|date:"j E" }}</h2>
+      <p class="board-legend" aria-hidden="true"><span class="key free"></span>свободно <span class="key busy"></span>занято</p>
+    </div>
+    <div class="board-scroll">
+      <div class="board-ruler" aria-hidden="true">{% for h in board_hours %}<span>{% if forloop.counter0|divisibleby:2 %}{{ h|stringformat:"02d" }}{% endif %}</span>{% endfor %}</div>
+      {% for row in board %}
+        <div class="board-row">
+          <a class="board-hall" href="{% url 'rental:hall_detail' row.hall.slug %}">{{ row.hall.name }}</a>
+          <div class="board-strip">
+            {% for s in row.slots %}
+              {% if s.state == "free" %}<a class="cell free" href="{% url 'rental:booking_create' %}?hall={{ row.hall.slug }}&amp;date={{ board_day|date:'Y-m-d' }}&amp;start={{ s.hour }}" aria-label="{{ row.hall.name }}, {{ s.hour }}:00, свободно — забронировать"></a>
+              {% else %}<span class="cell {{ s.state }}" role="img" aria-label="{{ row.hall.name }}, {{ s.hour }}:00, {% if s.state == 'busy' %}занято{% else %}время прошло{% endif %}"></span>{% endif %}
+            {% endfor %}
+          </div>
+          <span class="board-free">{% if row.free_count %}{{ row.free_count }} ч{% else %}занято{% endif %}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
 </section>
 
-<section aria-labelledby="halls-title">
-  <h2 id="halls-title">Наши залы</h2>
+<section aria-labelledby="halls-title" class="section">
+  <div class="section-head"><h2 id="halls-title">Залы</h2></div>
   <form method="get" class="filters filters-inline" action="{% url 'rental:home' %}#halls-title">
     <label>Вместимость от, чел. <input type="number" name="capacity" min="1" max="200" value="{{ capacity }}" inputmode="numeric"></label>
     <label>Цена часа до, ₽ <input type="number" name="max_price" min="0" step="50" value="{{ max_price }}" inputmode="numeric"></label>
     <div class="filter-actions"><button type="submit" class="btn btn-small">Подобрать</button>{% if filtered %} <a class="tap" href="{% url 'rental:home' %}">Сбросить</a>{% endif %}</div>
   </form>
-  <div class="card-grid">
+  <div class="card-grid hall-grid">
     {% for hall in halls %}
-      <article class="card">
-        {% if hall.image %}<img src="{{ hall.image.url }}" alt="Зал «{{ hall.name }}»: общий вид" width="800" height="500"{% if not forloop.first and forloop.counter > 3 %} loading="lazy"{% endif %}>{% else %}<div class="img-placeholder" role="img" aria-label="Фото зала «{{ hall.name }}» пока не загружено">Нет фото</div>{% endif %}
+      <article class="card hall-card">
+        <div class="hall-media">
+          {% if hall.image %}<img src="{{ hall.image.url }}" alt="Зал «{{ hall.name }}»: общий вид" width="800" height="533"{% if forloop.counter > 3 %} loading="lazy"{% endif %}>{% else %}<div class="img-placeholder" role="img" aria-label="Фото зала «{{ hall.name }}» пока не загружено">Нет фото</div>{% endif %}
+          <span class="price-chip">от {{ hall.min_price|floatformat:"-2" }} ₽/час</span>
+        </div>
         <div class="card-body">
-          <h3>{{ hall.name }}</h3>
-          <p class="muted">{{ hall.area }} м² · до {{ hall.capacity }} чел.{% if hall.avg_rating %} · ★ {{ hall.avg_rating|floatformat:1 }}{% endif %}</p>
-          <p>{{ hall.description|truncatechars:90 }}</p>
-          <p>от <span class="price">{{ hall.min_price|floatformat:"-2" }} ₽/час</span></p>
-          <a class="btn btn-light btn-small" href="{% url 'rental:hall_detail' hall.slug %}">Подробнее<span class="sr-only"> о зале «{{ hall.name }}»</span></a>
+          <h3><a class="stretched" href="{% url 'rental:hall_detail' hall.slug %}">{{ hall.name }}</a></h3>
+          <ul class="specs plain"><li>{{ hall.area }} м²</li><li>до {{ hall.capacity }} человек</li>{% if hall.avg_rating %}<li><span class="stars" role="img" aria-label="Средняя оценка {{ hall.avg_rating|floatformat:1 }} из 5">★ {{ hall.avg_rating|floatformat:1 }}</span></li>{% endif %}</ul>
+          <p class="muted">{{ hall.description|truncatechars:90 }}</p>
         </div>
       </article>
     {% empty %}
-      <p>{% if filtered %}Под эти условия залов нет. Попробуйте изменить вместимость или цену.{% else %}Залов пока нет.{% endif %}</p>
+      <p>{% if filtered %}Под эти условия залов нет. Измените вместимость или цену.{% else %}Залов пока нет.{% endif %}</p>
     {% endfor %}
   </div>
   {% include "rental/_pagination.html" %}
 </section>
 
-<section aria-labelledby="how-title">
-  <h2 id="how-title">Как это работает</h2>
-  <div class="steps">
-    <article class="card"><div class="card-body"><h3>Выберите зал</h3><p>Смотрите тарифы и свободное время.</p></div></article>
-    <article class="card"><div class="card-body"><h3>Добавьте оборудование</h3><p>Свет, фоны, реквизит, гримёрные места.</p></div></article>
-    <article class="card"><div class="card-body"><h3>Отправьте заявку</h3><p>Администратор подтвердит бронь.</p></div></article>
+<section aria-labelledby="eq-title" class="section">
+  <div class="section-head"><h2 id="eq-title">Свет и реквизит к любой брони</h2><a class="tap" href="{% url 'rental:equipment_list' %}">Весь каталог</a></div>
+  <div class="card-grid eq-grid4">
+    {% for e in featured %}{% include "rental/_equipment_card.html" with e=e eager=False %}{% endfor %}
   </div>
+</section>
+
+<section aria-labelledby="how-title" class="section">
+  <h2 id="how-title">Как забронировать</h2>
+  <ol class="steps plain">
+    <li><h3>Выберите зал и время</h3><p>Свободные часы видны на доске и на странице зала.</p></li>
+    <li><h3>Добавьте оборудование</h3><p>Свет, фоны, реквизит, гримёрные места. Занятое на это время отмечено заранее.</p></li>
+    <li><h3>Отправьте заявку</h3><p>Администратор подтвердит бронь, письмо придёт на почту.</p></li>
+  </ol>
 </section>
 {% endblock %}

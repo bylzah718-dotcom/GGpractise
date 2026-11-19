@@ -285,3 +285,32 @@ def change_status(booking: Booking, new_status: str) -> Booking:
     booking.status = new_status
     booking.save(update_fields=["status", "updated_at"])
     return booking
+
+
+def day_board(halls, day):
+    """Доска «Свободно сегодня»: для каждого зала — почасовые состояния на дату одним запросом к броням."""
+    halls = list(halls)
+    day_start, day_end = local_day_bounds(day)
+    busy = Booking.objects.filter(
+        hall__in=halls, status__in=Booking.ACTIVE_STATUSES, start__lt=day_end, end__gt=day_start,
+    ).values_list("hall_id", "start", "end")
+    by_hall = {}
+    for hall_id, start, end in busy:
+        by_hall.setdefault(hall_id, []).append((start, end))
+    now = timezone.now()
+    rows = []
+    for hall in halls:
+        slots = []
+        for hour in range(settings.STUDIO_OPEN_HOUR, settings.STUDIO_CLOSE_HOUR):
+            slot_start = make_start(day, hour)
+            slot_end = slot_start + timedelta(hours=1)
+            if slot_start <= now:
+                state = "past"
+            elif any(s < slot_end and e > slot_start for s, e in by_hall.get(hall.pk, [])):
+                state = "busy"
+            else:
+                state = "free"
+            slots.append({"hour": hour, "state": state})
+        free = [x["hour"] for x in slots if x["state"] == "free"]
+        rows.append({"hall": hall, "slots": slots, "free_count": len(free), "first_free": free[0] if free else None})
+    return rows

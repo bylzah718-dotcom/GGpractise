@@ -92,8 +92,21 @@ def home(request):
     if max_price:
         halls = halls.filter(min_price__lte=max_price)
     page, query_string = paginate(request, halls)
+    # Доска: сегодня, а после закрытия студии — завтра
+    board_day = timezone.localdate()
+    if timezone.localtime().hour >= settings.STUDIO_CLOSE_HOUR:
+        board_day += timedelta(days=1)
+    board = services.day_board(Hall.objects.filter(is_active=True).order_by("name"), board_day)
+    featured, seen = [], set()
+    for unit in Equipment.objects.filter(status=Equipment.AVAILABLE).order_by("category", "-price_per_hour", "name"):
+        if unit.category not in seen:  # по одной позиции из каждой категории
+            seen.add(unit.category)
+            featured.append(unit)
+    featured = featured[:4]
     return render(request, "rental/home.html", {
         "page": page, "halls": page, "query_string": query_string,
+        "board": board, "board_day": board_day, "board_is_today": board_day == timezone.localdate(),
+        "board_hours": list(range(settings.STUDIO_OPEN_HOUR, settings.STUDIO_CLOSE_HOUR)), "featured": featured,
         "capacity": request.GET.get("capacity", ""), "max_price": request.GET.get("max_price", ""),
         "filtered": bool(capacity or max_price),
     })
